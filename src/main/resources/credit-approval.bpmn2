@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements. See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership. The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations
+  under the License.
+-->
+<bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                   xmlns:drools="http://www.jboss.org/drools"
+                   id="credit_approval_process"
+                   targetNamespace="https://example.com/credit-approval">
+  <bpmn2:itemDefinition id="customerIdItem" structureRef="java.lang.String"/>
+  <bpmn2:itemDefinition id="creditScoreItem" structureRef="java.lang.Integer"/>
+  <bpmn2:itemDefinition id="monthlyIncomeItem" structureRef="java.math.BigDecimal"/>
+  <bpmn2:itemDefinition id="monthlyDebtItem" structureRef="java.math.BigDecimal"/>
+  <bpmn2:itemDefinition id="requestedAmountItem" structureRef="java.math.BigDecimal"/>
+  <bpmn2:itemDefinition id="fraudConfirmedItem" structureRef="java.lang.Boolean"/>
+  <bpmn2:itemDefinition id="debtRatioItem" structureRef="java.math.BigDecimal"/>
+  <bpmn2:itemDefinition id="inputValidItem" structureRef="java.lang.Boolean"/>
+  <bpmn2:itemDefinition id="approvalStatusItem" structureRef="java.lang.String"/>
+  <bpmn2:itemDefinition id="decisionReasonItem" structureRef="java.lang.String"/>
+
+  <bpmn2:process id="creditApproval" name="Credit approval" drools:packageName="com.example" isExecutable="true">
+    <bpmn2:property id="customerId" itemSubjectRef="customerIdItem"/>
+    <bpmn2:property id="creditScore" itemSubjectRef="creditScoreItem"/>
+    <bpmn2:property id="monthlyIncome" itemSubjectRef="monthlyIncomeItem"/>
+    <bpmn2:property id="monthlyDebt" itemSubjectRef="monthlyDebtItem"/>
+    <bpmn2:property id="requestedAmount" itemSubjectRef="requestedAmountItem"/>
+    <bpmn2:property id="fraudConfirmed" itemSubjectRef="fraudConfirmedItem"/>
+    <bpmn2:property id="debtRatio" itemSubjectRef="debtRatioItem"/>
+    <bpmn2:property id="inputValid" itemSubjectRef="inputValidItem"/>
+    <bpmn2:property id="approvalStatus" itemSubjectRef="approvalStatusItem"/>
+    <bpmn2:property id="decisionReason" itemSubjectRef="decisionReasonItem"/>
+
+    <bpmn2:startEvent id="applicationReceived" name="Application received">
+      <bpmn2:outgoing>flow_to_normalization</bpmn2:outgoing>
+    </bpmn2:startEvent>
+
+    <bpmn2:scriptTask id="normalizeInput" name="Normalize missing input" scriptFormat="http://www.java.com/java">
+      <bpmn2:incoming>flow_to_normalization</bpmn2:incoming>
+      <bpmn2:outgoing>flow_to_evaluation</bpmn2:outgoing>
+      <bpmn2:script><![CDATA[
+        customerId = customerId == null ? "" : customerId;
+        creditScore = creditScore == null ? -1 : creditScore;
+        monthlyIncome = monthlyIncome == null ? new java.math.BigDecimal("0") : monthlyIncome;
+        monthlyDebt = monthlyDebt == null ? new java.math.BigDecimal("0") : monthlyDebt;
+        requestedAmount = requestedAmount == null ? new java.math.BigDecimal("0") : requestedAmount;
+        fraudConfirmed = fraudConfirmed == null ? false : fraudConfirmed;
+        kcontext.setVariable("customerId", customerId);
+        kcontext.setVariable("creditScore", creditScore);
+        kcontext.setVariable("monthlyIncome", monthlyIncome);
+        kcontext.setVariable("monthlyDebt", monthlyDebt);
+        kcontext.setVariable("requestedAmount", requestedAmount);
+        kcontext.setVariable("fraudConfirmed", fraudConfirmed);
+      ]]></bpmn2:script>
+    </bpmn2:scriptTask>
+
+    <bpmn2:businessRuleTask id="validateAndEvaluate" name="Validate data and evaluate DMN" implementation="http://www.jboss.org/drools/dmn">
+      <bpmn2:incoming>flow_to_evaluation</bpmn2:incoming>
+      <bpmn2:outgoing>flow_to_status_gateway</bpmn2:outgoing>
+      <bpmn2:ioSpecification>
+        <bpmn2:dataInput id="input_customerId" name="customerId" drools:dtype="java.lang.String"/>
+        <bpmn2:dataInput id="input_creditScore" name="creditScore" drools:dtype="java.lang.Integer"/>
+        <bpmn2:dataInput id="input_monthlyIncome" name="monthlyIncome" drools:dtype="java.math.BigDecimal"/>
+        <bpmn2:dataInput id="input_monthlyDebt" name="monthlyDebt" drools:dtype="java.math.BigDecimal"/>
+        <bpmn2:dataInput id="input_requestedAmount" name="requestedAmount" drools:dtype="java.math.BigDecimal"/>
+        <bpmn2:dataInput id="input_fraudConfirmed" name="fraudConfirmed" drools:dtype="java.lang.Boolean"/>
+        <bpmn2:dataInput id="input_namespace" name="namespace" drools:dtype="java.lang.String"/>
+        <bpmn2:dataInput id="input_model" name="model" drools:dtype="java.lang.String"/>
+        <bpmn2:dataOutput id="output_debtRatio" name="debtRatio" drools:dtype="java.math.BigDecimal"/>
+        <bpmn2:dataOutput id="output_inputValid" name="inputValid" drools:dtype="java.lang.Boolean"/>
+        <bpmn2:dataOutput id="output_approvalStatus" name="approvalStatus" drools:dtype="java.lang.String"/>
+        <bpmn2:dataOutput id="output_decisionReason" name="decisionReason" drools:dtype="java.lang.String"/>
+        <bpmn2:inputSet>
+          <bpmn2:dataInputRefs>input_customerId</bpmn2:dataInputRefs>
+          <bpmn2:dataInputRefs>input_creditScore</bpmn2:dataInputRefs>
+          <bpmn2:dataInputRefs>input_monthlyIncome</bpmn2:dataInputRefs>
+          <bpmn2:dataInputRefs>input_monthlyDebt</bpmn2:dataInputRefs>
+          <bpmn2:dataInputRefs>input_requestedAmount</bpmn2:dataInputRefs>
+          <bpmn2:dataInputRefs>input_fraudConfirmed</bpmn2:dataInputRefs>
+          <bpmn2:dataInputRefs>input_namespace</bpmn2:dataInputRefs>
+          <bpmn2:dataInputRefs>input_model</bpmn2:dataInputRefs>
+        </bpmn2:inputSet>
+        <bpmn2:outputSet>
+          <bpmn2:dataOutputRefs>output_debtRatio</bpmn2:dataOutputRefs>
+          <bpmn2:dataOutputRefs>output_inputValid</bpmn2:dataOutputRefs>
+          <bpmn2:dataOutputRefs>output_approvalStatus</bpmn2:dataOutputRefs>
+          <bpmn2:dataOutputRefs>output_decisionReason</bpmn2:dataOutputRefs>
+        </bpmn2:outputSet>
+      </bpmn2:ioSpecification>
+      <bpmn2:dataInputAssociation><bpmn2:sourceRef>customerId</bpmn2:sourceRef><bpmn2:targetRef>input_customerId</bpmn2:targetRef></bpmn2:dataInputAssociation>
+      <bpmn2:dataInputAssociation><bpmn2:sourceRef>creditScore</bpmn2:sourceRef><bpmn2:targetRef>input_creditScore</bpmn2:targetRef></bpmn2:dataInputAssociation>
+      <bpmn2:dataInputAssociation><bpmn2:sourceRef>monthlyIncome</bpmn2:sourceRef><bpmn2:targetRef>input_monthlyIncome</bpmn2:targetRef></bpmn2:dataInputAssociation>
+      <bpmn2:dataInputAssociation><bpmn2:sourceRef>monthlyDebt</bpmn2:sourceRef><bpmn2:targetRef>input_monthlyDebt</bpmn2:targetRef></bpmn2:dataInputAssociation>
+      <bpmn2:dataInputAssociation><bpmn2:sourceRef>requestedAmount</bpmn2:sourceRef><bpmn2:targetRef>input_requestedAmount</bpmn2:targetRef></bpmn2:dataInputAssociation>
+      <bpmn2:dataInputAssociation><bpmn2:sourceRef>fraudConfirmed</bpmn2:sourceRef><bpmn2:targetRef>input_fraudConfirmed</bpmn2:targetRef></bpmn2:dataInputAssociation>
+      <bpmn2:dataInputAssociation>
+        <bpmn2:targetRef>input_namespace</bpmn2:targetRef>
+        <bpmn2:assignment><bpmn2:from xsi:type="bpmn2:tFormalExpression">https://example.com/credit-approval</bpmn2:from><bpmn2:to xsi:type="bpmn2:tFormalExpression">input_namespace</bpmn2:to></bpmn2:assignment>
+      </bpmn2:dataInputAssociation>
+      <bpmn2:dataInputAssociation>
+        <bpmn2:targetRef>input_model</bpmn2:targetRef>
+        <bpmn2:assignment><bpmn2:from xsi:type="bpmn2:tFormalExpression">credit-approval</bpmn2:from><bpmn2:to xsi:type="bpmn2:tFormalExpression">input_model</bpmn2:to></bpmn2:assignment>
+      </bpmn2:dataInputAssociation>
+      <bpmn2:dataOutputAssociation><bpmn2:sourceRef>output_debtRatio</bpmn2:sourceRef><bpmn2:targetRef>debtRatio</bpmn2:targetRef></bpmn2:dataOutputAssociation>
+      <bpmn2:dataOutputAssociation><bpmn2:sourceRef>output_inputValid</bpmn2:sourceRef><bpmn2:targetRef>inputValid</bpmn2:targetRef></bpmn2:dataOutputAssociation>
+      <bpmn2:dataOutputAssociation><bpmn2:sourceRef>output_approvalStatus</bpmn2:sourceRef><bpmn2:targetRef>approvalStatus</bpmn2:targetRef></bpmn2:dataOutputAssociation>
+      <bpmn2:dataOutputAssociation><bpmn2:sourceRef>output_decisionReason</bpmn2:sourceRef><bpmn2:targetRef>decisionReason</bpmn2:targetRef></bpmn2:dataOutputAssociation>
+    </bpmn2:businessRuleTask>
+
+    <bpmn2:exclusiveGateway id="statusGateway" name="Route by approval status" gatewayDirection="Diverging" default="flow_to_rejected"/>
+    <bpmn2:endEvent id="approved" name="Approved"><bpmn2:incoming>flow_to_approved</bpmn2:incoming></bpmn2:endEvent>
+    <bpmn2:endEvent id="manualReview" name="Manual review"><bpmn2:incoming>flow_to_manual_review</bpmn2:incoming></bpmn2:endEvent>
+    <bpmn2:endEvent id="rejected" name="Rejected"><bpmn2:incoming>flow_to_rejected</bpmn2:incoming></bpmn2:endEvent>
+
+    <bpmn2:sequenceFlow id="flow_to_normalization" sourceRef="applicationReceived" targetRef="normalizeInput"/>
+    <bpmn2:sequenceFlow id="flow_to_evaluation" sourceRef="normalizeInput" targetRef="validateAndEvaluate"/>
+    <bpmn2:sequenceFlow id="flow_to_status_gateway" sourceRef="validateAndEvaluate" targetRef="statusGateway"/>
+    <bpmn2:sequenceFlow id="flow_to_approved" sourceRef="statusGateway" targetRef="approved">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="http://www.mvel.org/2.0">approvalStatus == "APPROVED"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="flow_to_manual_review" sourceRef="statusGateway" targetRef="manualReview">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression" language="http://www.mvel.org/2.0">approvalStatus == "MANUAL_REVIEW"</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="flow_to_rejected" sourceRef="statusGateway" targetRef="rejected"/>
+  </bpmn2:process>
+</bpmn2:definitions>

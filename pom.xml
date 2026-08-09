@@ -33,7 +33,7 @@
   <artifactId>credit-approval</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
-  <description>Generated project credit-approval</description>
+  <description>Credit approval process using Kogito BPMN and DMN</description>
 
   <properties>
     <java.version>17</java.version>

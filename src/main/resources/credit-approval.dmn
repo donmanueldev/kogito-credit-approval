@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<semantic:definitions xmlns="https://example.com/credit-approval" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:dmndi="https://www.omg.org/spec/DMN/20230324/DMNDI/" xmlns:feel="https://www.omg.org/spec/DMN/20240513/FEEL/" xmlns:kie="https://kie.org/dmn/extensions/1.0" xmlns:semantic="https://www.omg.org/spec/DMN/20240513/MODEL/" id="credit_approval" name="credit-approval" namespace="https://example.com/credit-approval">
+  <semantic:decision id="d_inputValid" name="inputValid">
+    <semantic:variable name="inputValid" typeRef="boolean" id="_0D07F63F-54AD-4E50-98B1-7E831525697F" />
+    <semantic:informationRequirement id="_CA2F9FAD-F437-438A-948E-EB8614DC45A9">
+      <semantic:requiredInput href="#i_customerId" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_E56F0320-11FB-4C61-902E-A0804ED37DB3">
+      <semantic:requiredInput href="#i_creditScore" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_9F11F85F-A51F-486A-823D-92234688CECB">
+      <semantic:requiredInput href="#i_monthlyIncome" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_701CD6DD-43E5-41AE-9B1F-6DC183A0C440">
+      <semantic:requiredInput href="#i_monthlyDebt" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_FCF5CF83-2278-4A51-9FAE-E3838249FEF8">
+      <semantic:requiredInput href="#i_requestedAmount" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_0810E75A-4226-433F-BAD4-3FF016D1AA4D">
+      <semantic:requiredInput href="#i_fraudConfirmed" />
+    </semantic:informationRequirement>
+    <semantic:literalExpression id="_31BF045F-9E06-4470-A2A3-48348C25D280">
+      <semantic:text>customerId != null and customerId != &quot;&quot; and creditScore != null and creditScore &gt;= 0 and monthlyIncome != null and monthlyIncome &gt; 0 and monthlyDebt != null and monthlyDebt &gt;= 0 and requestedAmount != null and requestedAmount &gt; 0 and fraudConfirmed != null</semantic:text>
+    </semantic:literalExpression>
+  </semantic:decision>
+  <semantic:decision id="d_debtRatio" name="debtRatio">
+    <semantic:variable name="debtRatio" typeRef="number" id="_7C3E1F16-2A0A-4570-912C-75CB9EADFEED" />
+    <semantic:informationRequirement id="_69136D0F-204F-4366-A01D-383C8E8ECB1C">
+      <semantic:requiredInput href="#i_monthlyIncome" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_69F426B1-2C02-4E73-8CF4-2A1B80006C24">
+      <semantic:requiredInput href="#i_monthlyDebt" />
+    </semantic:informationRequirement>
+    <semantic:literalExpression id="_8F257952-D067-4FC6-A049-462AFB532726">
+      <semantic:text>if monthlyIncome != null and monthlyIncome &gt; 0 and monthlyDebt != null then monthlyDebt / monthlyIncome else null</semantic:text>
+    </semantic:literalExpression>
+  </semantic:decision>
+  <semantic:decision id="d_approvalStatus" name="approvalStatus">
+    <semantic:variable name="approvalStatus" typeRef="string" id="_1920F9FC-CCF9-45BF-8587-C76A686495DC" />
+    <semantic:informationRequirement id="_245F9997-1E7E-4B22-85E9-D07C8B11F0C5">
+      <semantic:requiredDecision href="#d_inputValid" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_A8E1278D-6E64-4CFB-BCAA-0F21D4EC87E8">
+      <semantic:requiredDecision href="#d_debtRatio" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_3AF6B5C7-9402-4C11-9F37-0EA5A5AE5A82">
+      <semantic:requiredInput href="#i_creditScore" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_C5ED2D99-6A48-47D7-927F-41E95DDE434D">
+      <semantic:requiredInput href="#i_monthlyIncome" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_281082F5-F312-4711-8A7D-1FA17670C4E2">
+      <semantic:requiredInput href="#i_fraudConfirmed" />
+    </semantic:informationRequirement>
+    <semantic:decisionTable hitPolicy="FIRST" id="_93F26CB2-9C7E-4D40-A405-1316F77D8752">
+      <semantic:input id="status_input_valid" label="Input valid">
+        <semantic:inputExpression typeRef="boolean" id="_E78566E6-EEAC-4D4F-BB5C-C03DA3CAD157">
+          <semantic:text>inputValid</semantic:text>
+        </semantic:inputExpression>
+      </semantic:input>
+      <semantic:input id="status_input_fraud" label="Fraud confirmed">
+        <semantic:inputExpression typeRef="boolean" id="_EF4CBEE8-07FF-47DF-AF2E-7428A2F48661">
+          <semantic:text>fraudConfirmed</semantic:text>
+        </semantic:inputExpression>
+      </semantic:input>
+      <semantic:input id="status_input_score" label="Credit score">
+        <semantic:inputExpression typeRef="number" id="_B92DC61E-8DDA-4485-8BD0-6BAB1953BBA4">
+          <semantic:text>creditScore</semantic:text>
+        </semantic:inputExpression>
+      </semantic:input>
+      <semantic:input id="status_input_income" label="Monthly income">
+        <semantic:inputExpression typeRef="number" id="_50962F0F-1D87-4315-A796-1D68756C3169">
+          <semantic:text>monthlyIncome</semantic:text>
+        </semantic:inputExpression>
+      </semantic:input>
+      <semantic:input id="status_input_ratio" label="Debt ratio">
+        <semantic:inputExpression typeRef="number" id="_5B3255FE-5D7E-4654-87E0-83B455B67FEC">
+          <semantic:text>debtRatio</semantic:text>
+        </semantic:inputExpression>
+      </semantic:input>
+      <semantic:output id="status_output" label="Approval status">
+        <semantic:defaultOutputEntry id="_B76E415C-7D2D-4AF0-B031-74DB0F32824D">
+          <semantic:text>&quot;REJECTED&quot;</semantic:text>
+        </semantic:defaultOutputEntry>
+      </semantic:output>
+      <semantic:rule id="status_rule_fraud_priority">
+        <semantic:inputEntry id="_6543DBA3-9A87-4D75-A595-4D1ED652CD28">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_BE693E78-4F04-435A-A6E1-6A6BBCA22B5F">
+          <semantic:text>true</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_25AB121F-EC66-46AD-A31C-CA8BA1F04EBF">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_E6EDF5DC-DEBB-4A63-9302-D13B7C123B03">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_3CC386FB-38C7-4026-B773-E3170442F829">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:outputEntry id="_01885533-2FA6-4059-96A6-157CCDD7A803">
+          <semantic:text>&quot;REJECTED&quot;</semantic:text>
+        </semantic:outputEntry>
+      </semantic:rule>
+      <semantic:rule id="status_rule_invalid">
+        <semantic:inputEntry id="_56A70E29-FE33-41DB-8B5C-46B91F3ED88E">
+          <semantic:text>false</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_B934B28C-F69A-4FC1-80D7-AB3FA147CEB6">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_62CEE3CB-5603-4F51-B957-194B5BFA63C1">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_EE4D8580-3B65-4CE8-A25A-BE1B9B3CC852">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_EB10D4FF-F90D-4724-BDA0-97E4108E54D8">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:outputEntry id="_6B886387-0702-49A6-BF89-88586E1FF9E6">
+          <semantic:text>&quot;REJECTED&quot;</semantic:text>
+        </semantic:outputEntry>
+      </semantic:rule>
+      <semantic:rule id="status_rule_fraud">
+        <semantic:inputEntry id="_821EF283-029F-4EDB-9D35-5D3BA55A42F1">
+          <semantic:text>true</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_81239AE7-5849-49AA-8F24-9BAFF26D621C">
+          <semantic:text>true</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_A4E1967A-355F-40B0-8556-77F8C833F25A">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_78705CC6-74AB-48E0-AC53-9FB3B8AD6690">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_65CC00B5-73C6-4677-ADA9-DDE556C8B6C7">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:outputEntry id="_D8404BF2-03B1-43C2-9726-04E30B9553B3">
+          <semantic:text>&quot;REJECTED&quot;</semantic:text>
+        </semantic:outputEntry>
+      </semantic:rule>
+      <semantic:rule id="status_rule_approved">
+        <semantic:inputEntry id="_A01824DA-E745-4363-95BF-E0823E3DFA62">
+          <semantic:text>true</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_6F3ED39C-CE27-4B0B-AD2F-25CCA5F40DBB">
+          <semantic:text>false</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_06DFF1CE-BFAA-4D3C-B878-A1635CB97121">
+          <semantic:text>&gt;= 750</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_7767A600-4FBD-4DB9-92E7-E1E15FC93F14">
+          <semantic:text>&gt;= 1500</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_D1E6E1DB-2E5F-4F0C-BFC0-ED9C3AA65458">
+          <semantic:text>&lt;= 0.35</semantic:text>
+        </semantic:inputEntry>
+        <semantic:outputEntry id="_0D587055-20D4-4BB8-943B-4E05F5081608">
+          <semantic:text>&quot;APPROVED&quot;</semantic:text>
+        </semantic:outputEntry>
+      </semantic:rule>
+      <semantic:rule id="status_rule_manual_score">
+        <semantic:inputEntry id="_42DE7257-4755-4218-AED8-FE4CA4D798F4">
+          <semantic:text>true</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_AC77320F-F33D-49F8-A145-3806795F9A97">
+          <semantic:text>false</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_EA453385-D94C-4961-8D04-26ACA993694A">
+          <semantic:text>[650..749]</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_B3706618-DE81-4C43-965A-014757192A0D">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_9D222D74-B5CC-4D9C-8FFF-552AE9510B51">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:outputEntry id="_0C6F70DD-AF26-481F-86B3-3951B832E56A">
+          <semantic:text>&quot;MANUAL_REVIEW&quot;</semantic:text>
+        </semantic:outputEntry>
+      </semantic:rule>
+      <semantic:rule id="status_rule_rejected_score">
+        <semantic:inputEntry id="_BC5A2F14-F42A-4791-A458-7D97FDB90231">
+          <semantic:text>true</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_8719922D-17C9-44FD-A278-46ADBEBDE371">
+          <semantic:text>false</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_ACB101DB-97A5-4A8C-8989-29BD0AB5B2AD">
+          <semantic:text>&lt; 650</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_BA1B44B3-6C71-48F0-967A-6C4BC01AC83B">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_73FAB298-EAE0-49B0-BEF5-68B43E92ADB6">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:outputEntry id="_37D2EDBA-E8CC-48F8-8B48-1444E323CF97">
+          <semantic:text>&quot;REJECTED&quot;</semantic:text>
+        </semantic:outputEntry>
+      </semantic:rule>
+      <semantic:rule id="status_rule_manual_fallback">
+        <semantic:inputEntry id="_12C1C6A3-E9E6-426C-9E3E-F358364D4232">
+          <semantic:text>true</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_5657A7FE-14FE-4BDB-8B75-F4D90A0892B8">
+          <semantic:text>false</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_A78ADCC6-B3E7-488B-9067-34EF6C8F22FA">
+          <semantic:text>&gt;= 750</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_2E2BC08C-9561-428B-B12F-B449B5A0BAD7">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:inputEntry id="_CC694E7A-4847-444D-8537-097D1AE56D98">
+          <semantic:text>-</semantic:text>
+        </semantic:inputEntry>
+        <semantic:outputEntry id="_25C5DC65-9C06-4285-861B-0010A56785BD">
+          <semantic:text>&quot;MANUAL_REVIEW&quot;</semantic:text>
+        </semantic:outputEntry>
+      </semantic:rule>
+    </semantic:decisionTable>
+  </semantic:decision>
+  <semantic:decision id="d_decisionReason" name="decisionReason">
+    <semantic:variable name="decisionReason" typeRef="string" id="_7A3135FF-283B-457C-8E05-390819137246" />
+    <semantic:informationRequirement id="_3B8606CD-C057-40E0-9986-6C56793CD573">
+      <semantic:requiredDecision href="#d_inputValid" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_F5CD4370-4E59-44CF-BC17-C684FE5831A9">
+      <semantic:requiredDecision href="#d_approvalStatus" />
+    </semantic:informationRequirement>
+    <semantic:informationRequirement id="_9189E42A-0EFC-45C1-879B-7E3946A598A5">
+      <semantic:requiredInput href="#i_fraudConfirmed" />
+    </semantic:informationRequirement>
+    <semantic:literalExpression id="_39CE6128-6CB7-4C4A-B72D-23835F31A096">
+      <semantic:text>if fraudConfirmed = true then &quot;FRAUD_CONFIRMED&quot; else if inputValid = false then &quot;INVALID_INPUT&quot; else if approvalStatus = &quot;APPROVED&quot; then &quot;AUTOMATIC_APPROVAL&quot; else if approvalStatus = &quot;MANUAL_REVIEW&quot; then &quot;POLICY_REQUIRES_REVIEW&quot; else &quot;CREDIT_POLICY_NOT_MET&quot;</semantic:text>
+    </semantic:literalExpression>
+  </semantic:decision>
+  <semantic:inputData id="i_customerId" name="customerId">
+    <semantic:variable name="customerId" typeRef="string" id="_96FB490B-854A-4722-96C1-EDF8776797CB" />
+  </semantic:inputData>
+  <semantic:inputData id="i_creditScore" name="creditScore">
+    <semantic:variable name="creditScore" typeRef="number" id="_47ED5C4A-5D53-43B8-8499-51D4B76D1379" />
+  </semantic:inputData>
+  <semantic:inputData id="i_monthlyIncome" name="monthlyIncome">
+    <semantic:variable name="monthlyIncome" typeRef="number" id="_12D2C88F-C063-4E11-8E7E-B5263A1C7920" />
+  </semantic:inputData>
+  <semantic:inputData id="i_monthlyDebt" name="monthlyDebt">
+    <semantic:variable name="monthlyDebt" typeRef="number" id="_E578EDB5-BBA1-469C-908F-9395797F31BD" />
+  </semantic:inputData>
+  <semantic:inputData id="i_requestedAmount" name="requestedAmount">
+    <semantic:variable name="requestedAmount" typeRef="number" id="_8E22A5D5-5246-4CF8-AFC0-2C5EE3095325" />
+  </semantic:inputData>
+  <semantic:inputData id="i_fraudConfirmed" name="fraudConfirmed">
+    <semantic:variable name="fraudConfirmed" typeRef="boolean" id="_C107703E-FC5D-4E83-9EAE-689B8419254E" />
+  </semantic:inputData>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="_B486432D-6B62-417C-BDEE-BE3E78020B77" name="Default DRD" useAlternativeInputDataShape="false">
+      <di:extension>
+        <kie:ComponentsWidthsExtension>
+          <kie:ComponentWidths />
+        </kie:ComponentsWidthsExtension>
+      </di:extension>
+      <dmndi:DMNShape id="_BC26E37B-3C03-4F87-8FC2-DB47EBF49418" dmnElementRef="d_inputValid">
+        <dc:Bounds x="772" y="472" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_79A15F94-71AC-4F28-8605-6D2BB060DA3B" dmnElementRef="d_debtRatio">
+        <dc:Bounds x="992" y="472" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_A098DE20-665C-4140-B2E9-FB3ABA8F3938" dmnElementRef="d_approvalStatus">
+        <dc:Bounds x="862" y="292" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_10987D1C-B335-4178-ABA6-49C0DA7E6438" dmnElementRef="d_decisionReason">
+        <dc:Bounds x="552" y="112" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_6C2EC666-3B08-4C68-ACBF-89654EFA7C06" dmnElementRef="i_customerId">
+        <dc:Bounds x="332" y="652" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_6677DB31-633F-43AB-B570-916323C30D6F" dmnElementRef="i_creditScore">
+        <dc:Bounds x="772" y="652" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_E29E17BD-65EF-46D4-91E8-0DACF71B2463" dmnElementRef="i_monthlyIncome">
+        <dc:Bounds x="1212" y="652" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_7C92FBCC-B56E-451C-ADFB-C2DEE1654759" dmnElementRef="i_monthlyDebt">
+        <dc:Bounds x="992" y="652" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_C134A741-1050-4B15-9C46-0DE23DCA08F9" dmnElementRef="i_requestedAmount">
+        <dc:Bounds x="112" y="652" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_9544D485-09BF-47CB-BC7E-3977EE93339D" dmnElementRef="i_fraudConfirmed">
+        <dc:Bounds x="552" y="652" width="160" height="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="_DBFE60D2-1829-4D97-AA39-188E1A20AAD2" dmnElementRef="_CA2F9FAD-F437-438A-948E-EB8614DC45A9" sourceElement="_6C2EC666-3B08-4C68-ACBF-89654EFA7C06" targetElement="_BC26E37B-3C03-4F87-8FC2-DB47EBF49418">
+        <di:waypoint x="412" y="652" />
+        <di:waypoint x="852" y="552" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_A59FCFC8-FB15-4368-8027-0A2DBC1FDFF1" dmnElementRef="_E56F0320-11FB-4C61-902E-A0804ED37DB3" sourceElement="_6677DB31-633F-43AB-B570-916323C30D6F" targetElement="_BC26E37B-3C03-4F87-8FC2-DB47EBF49418">
+        <di:waypoint x="852" y="652" />
+        <di:waypoint x="852" y="552" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_D1651365-C670-4039-89FC-D0BF9E84170D" dmnElementRef="_9F11F85F-A51F-486A-823D-92234688CECB" sourceElement="_E29E17BD-65EF-46D4-91E8-0DACF71B2463" targetElement="_BC26E37B-3C03-4F87-8FC2-DB47EBF49418">
+        <di:waypoint x="1292" y="652" />
+        <di:waypoint x="852" y="552" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_C0DA4972-EBF1-48D7-BD53-4F2420EA6362" dmnElementRef="_701CD6DD-43E5-41AE-9B1F-6DC183A0C440" sourceElement="_7C92FBCC-B56E-451C-ADFB-C2DEE1654759" targetElement="_BC26E37B-3C03-4F87-8FC2-DB47EBF49418">
+        <di:waypoint x="1072" y="652" />
+        <di:waypoint x="852" y="552" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_3ABABB43-40A5-4F54-BB92-58F065101896" dmnElementRef="_FCF5CF83-2278-4A51-9FAE-E3838249FEF8" sourceElement="_C134A741-1050-4B15-9C46-0DE23DCA08F9" targetElement="_BC26E37B-3C03-4F87-8FC2-DB47EBF49418">
+        <di:waypoint x="192" y="652" />
+        <di:waypoint x="852" y="552" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_69E9F45B-A403-40F3-AD68-C9F345A2A5D9" dmnElementRef="_0810E75A-4226-433F-BAD4-3FF016D1AA4D" sourceElement="_9544D485-09BF-47CB-BC7E-3977EE93339D" targetElement="_BC26E37B-3C03-4F87-8FC2-DB47EBF49418">
+        <di:waypoint x="632" y="652" />
+        <di:waypoint x="852" y="552" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_A455BE3C-74D4-43A3-98C4-DF9CBD7B6E7E" dmnElementRef="_69136D0F-204F-4366-A01D-383C8E8ECB1C" sourceElement="_E29E17BD-65EF-46D4-91E8-0DACF71B2463" targetElement="_79A15F94-71AC-4F28-8605-6D2BB060DA3B">
+        <di:waypoint x="1292" y="652" />
+        <di:waypoint x="1072" y="552" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_AE455D37-D5DE-4939-9054-5F8555A6EEF7" dmnElementRef="_69F426B1-2C02-4E73-8CF4-2A1B80006C24" sourceElement="_7C92FBCC-B56E-451C-ADFB-C2DEE1654759" targetElement="_79A15F94-71AC-4F28-8605-6D2BB060DA3B">
+        <di:waypoint x="1072" y="652" />
+        <di:waypoint x="1072" y="552" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_B77E249E-D1D2-45D8-A2E3-6CBA14850F90" dmnElementRef="_245F9997-1E7E-4B22-85E9-D07C8B11F0C5" sourceElement="_BC26E37B-3C03-4F87-8FC2-DB47EBF49418" targetElement="_A098DE20-665C-4140-B2E9-FB3ABA8F3938">
+        <di:waypoint x="852" y="472" />
+        <di:waypoint x="942" y="372" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_9102D856-D56C-4F9E-ACE3-84BE06F5575B" dmnElementRef="_A8E1278D-6E64-4CFB-BCAA-0F21D4EC87E8" sourceElement="_79A15F94-71AC-4F28-8605-6D2BB060DA3B" targetElement="_A098DE20-665C-4140-B2E9-FB3ABA8F3938">
+        <di:waypoint x="1072" y="472" />
+        <di:waypoint x="942" y="372" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_5188A53F-CB16-4597-B635-E49FF954687E" dmnElementRef="_3AF6B5C7-9402-4C11-9F37-0EA5A5AE5A82" sourceElement="_6677DB31-633F-43AB-B570-916323C30D6F" targetElement="_A098DE20-665C-4140-B2E9-FB3ABA8F3938">
+        <di:waypoint x="852" y="652" />
+        <di:waypoint x="942" y="372" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_9F7B0C3C-0138-48E8-B23F-A159B80B77E2" dmnElementRef="_C5ED2D99-6A48-47D7-927F-41E95DDE434D" sourceElement="_E29E17BD-65EF-46D4-91E8-0DACF71B2463" targetElement="_A098DE20-665C-4140-B2E9-FB3ABA8F3938">
+        <di:waypoint x="1292" y="652" />
+        <di:waypoint x="942" y="372" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_57A0F4D5-202A-4951-A253-635B015C52D4" dmnElementRef="_281082F5-F312-4711-8A7D-1FA17670C4E2" sourceElement="_9544D485-09BF-47CB-BC7E-3977EE93339D" targetElement="_A098DE20-665C-4140-B2E9-FB3ABA8F3938">
+        <di:waypoint x="632" y="652" />
+        <di:waypoint x="942" y="372" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_147AED0F-33B7-4143-87B7-A9EB2405503F" dmnElementRef="_3B8606CD-C057-40E0-9986-6C56793CD573" sourceElement="_BC26E37B-3C03-4F87-8FC2-DB47EBF49418" targetElement="_10987D1C-B335-4178-ABA6-49C0DA7E6438">
+        <di:waypoint x="852" y="472" />
+        <di:waypoint x="632" y="192" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_BA15154C-E80D-4B41-AFC0-DED3A968181C" dmnElementRef="_F5CD4370-4E59-44CF-BC17-C684FE5831A9" sourceElement="_A098DE20-665C-4140-B2E9-FB3ABA8F3938" targetElement="_10987D1C-B335-4178-ABA6-49C0DA7E6438">
+        <di:waypoint x="942" y="292" />
+        <di:waypoint x="632" y="192" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="_BD8D09C8-AD3B-4685-9F08-0F9239CB716D" dmnElementRef="_9189E42A-0EFC-45C1-879B-7E3946A598A5" sourceElement="_9544D485-09BF-47CB-BC7E-3977EE93339D" targetElement="_10987D1C-B335-4178-ABA6-49C0DA7E6438">
+        <di:waypoint x="632" y="652" />
+        <di:waypoint x="632" y="192" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</semantic:definitions>
