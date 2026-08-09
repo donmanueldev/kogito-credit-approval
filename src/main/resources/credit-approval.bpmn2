@@ -53,12 +53,15 @@
       <bpmn2:incoming>flow_to_normalization</bpmn2:incoming>
       <bpmn2:outgoing>flow_to_evaluation</bpmn2:outgoing>
       <bpmn2:script><![CDATA[
-        customerId = customerId == null ? "" : customerId;
-        creditScore = creditScore == null ? -1 : creditScore;
-        monthlyIncome = monthlyIncome == null ? new java.math.BigDecimal("0") : monthlyIncome;
-        monthlyDebt = monthlyDebt == null ? new java.math.BigDecimal("0") : monthlyDebt;
-        requestedAmount = requestedAmount == null ? new java.math.BigDecimal("0") : requestedAmount;
-        fraudConfirmed = fraudConfirmed == null ? false : fraudConfirmed;
+        com.example.creditapproval.CreditApplication normalized =
+            com.example.creditapproval.CreditApplicationNormalizer.normalize(
+                customerId, creditScore, monthlyIncome, monthlyDebt, requestedAmount, fraudConfirmed);
+        customerId = normalized.customerId();
+        creditScore = normalized.creditScore();
+        monthlyIncome = normalized.monthlyIncome();
+        monthlyDebt = normalized.monthlyDebt();
+        requestedAmount = normalized.requestedAmount();
+        fraudConfirmed = normalized.fraudConfirmed();
         kcontext.setVariable("customerId", customerId);
         kcontext.setVariable("creditScore", creditScore);
         kcontext.setVariable("monthlyIncome", monthlyIncome);

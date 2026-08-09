@@ -83,7 +83,7 @@ flowchart LR
 `src/main/resources/credit-approval.bpmn2` contiene el flujo de negocio:
 
 1. `Application received` inicia la instancia.
-2. `Normalize missing input` convierte valores ausentes en sentinelas seguros (`-1`, `0`, `false` o cadena vacía). Esto permite que `{}` sea evaluado por DMN sin una excepción técnica.
+2. `Normalize missing input` delega en `CreditApplicationNormalizer` la conversión de valores ausentes a sentinelas seguros (`-1`, `0`, `false` o cadena vacía). Esto permite que `{}` sea evaluado por DMN sin una excepción técnica.
 3. `Validate data and evaluate DMN` invoca la decisión `credit-approval` usando la namespace `https://example.com/credit-approval`.
 4. El gateway exclusivo enruta por `approvalStatus`.
 5. Cada ruta termina en un evento final independiente.
@@ -137,10 +137,12 @@ mvn clean test
 
 ```text
 src/main/java/com/example/KogitoApplication.java  # Arranque Spring Boot
+src/main/java/com/example/creditapproval/         # Clases Java del dominio
 src/main/resources/credit-approval.bpmn2          # Orquestación del proceso
 src/main/resources/credit-approval.dmn            # Reglas y decisiones FEEL
 src/test/java/com/example/CreditApprovalProcessTest.java
                                                      # Pruebas HTTP de extremo a extremo
+src/test/java/com/example/creditapproval/          # Pruebas unitarias Java
 Prueba_Tecnica_Kogito_Banca.md                     # Enunciado para el candidato
 ```
 
@@ -153,6 +155,18 @@ Se mantuvo una sola aplicación y el endpoint generado por Kogito porque el obje
 Se eliminó la configuración CORS global del arquetipo. Una política abierta con credenciales no es apropiada para un servicio bancario y tampoco es necesaria para esta prueba sin frontend.
 
 La normalización está modelada como un paso BPMN visible porque evita que los datos ausentes se conviertan accidentalmente en una excepción del motor DMN. La decisión sigue siendo responsable de validar el significado de los datos y elegir el estado de negocio.
+
+## Clases Java
+
+La solución no depende únicamente de las clases que Kogito genera en `target/`. El código fuente incluye:
+
+- `CreditApplication`: record inmutable del dominio; calcula `debtRatio` de forma segura y expone la validación estructural.
+- `CreditApplicationNormalizer`: normalizador usado directamente por el script BPMN para preparar el contexto DMN.
+- `CreditApprovalStatus`: enum del contrato público de estados.
+- `CreditDecisionReason`: enum de las razones de negocio devueltas por la decisión.
+- `KogitoApplication`: arranque de Spring Boot y carga de los beans generados por Kogito.
+
+Las reglas de aprobación siguen estando en DMN para conservar la separación entre código de dominio, orquestación y política configurable. Las clases Java cubren el contrato, la seguridad del cálculo y la normalización; no duplican la tabla de decisión.
 
 ## Evolución hacia producción bancaria
 
