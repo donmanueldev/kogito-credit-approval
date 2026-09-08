@@ -1,17 +1,16 @@
-# Credit approval con Kogito
+# Evaluación de crédito con Kogito
 
-Ejemplo completo de una evaluación de crédito implementada con Spring Boot, Kogito, BPMN y DMN. El proceso recibe una solicitud, normaliza valores ausentes, ejecuta la decisión DMN y finaliza en una de tres rutas: `APPROVED`, `MANUAL_REVIEW` o `REJECTED`.
+Implementación de un proceso de evaluación crediticia con Spring Boot, Kogito, BPMN y DMN. El proceso recibe una solicitud, prepara los datos de entrada, ejecuta una decisión de negocio y finaliza en uno de estos estados:
 
-La versión de Kogito utilizada es `10.2.0`, con Java 17 como nivel de compilación y Spring Boot 3.5.10.
+- `APROBADO`
+- `REVISION_MANUAL`
+- `RECHAZADO`
 
-## Ejecutar el proyecto
+La solución mantiene la orquestación en BPMN y la política crediticia en DMN. El código Java se limita al modelo de dominio, la validación estructural y la normalización necesaria para que los datos incompletos puedan evaluarse de forma controlada.
 
-Requisitos:
+## Ejecución
 
-- JDK 17 o superior.
-- Maven 3.9 o superior.
-
-Compilar y ejecutar todas las pruebas:
+Ejecutar la compilación y todas las pruebas:
 
 ```bash
 mvn clean test
@@ -23,19 +22,25 @@ Iniciar la aplicación:
 mvn spring-boot:run
 ```
 
-Kogito genera el endpoint REST del proceso a partir de `credit-approval.bpmn2`:
+La aplicación queda disponible en `http://localhost:8080`.
+
+## API de evaluación
+
+Kogito genera el endpoint a partir de `src/main/resources/credit-approval.bpmn2`:
 
 ```text
-POST http://localhost:8080/creditApproval
+POST /creditApproval
+Content-Type: application/json
+Accept: application/json
 ```
 
-## Ejemplo HTTP
+### Solicitud
 
 ```bash
-curl -X POST http://localhost:8080/creditApproval \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json' \
-  -d '{
+curl --request POST 'http://localhost:8080/creditApproval' \
+  --header 'Content-Type: application/json' \
+  --header 'Accept: application/json' \
+  --data '{
     "customerId": "CUST-001",
     "creditScore": 720,
     "monthlyIncome": 2500,
@@ -45,7 +50,9 @@ curl -X POST http://localhost:8080/creditApproval \
   }'
 ```
 
-La respuesta incluye el identificador de la instancia y las variables del proceso, por ejemplo:
+### Respuesta
+
+Una evaluación válida devuelve `201 Created`, un encabezado `Location` y las variables de la instancia del proceso:
 
 ```json
 {
@@ -58,142 +65,257 @@ La respuesta incluye el identificador de la instancia y las variables del proces
   "fraudConfirmed": false,
   "debtRatio": 0.24,
   "inputValid": true,
-  "approvalStatus": "MANUAL_REVIEW",
-  "decisionReason": "POLICY_REQUIRES_REVIEW"
+  "approvalStatus": "REVISION_MANUAL",
+  "decisionReason": "REVISION_REQUERIDA"
 }
 ```
 
-No se utiliza `400 Bad Request` para los escenarios de negocio de esta prueba. Si faltan datos o contienen valores inválidos, el proceso termina con `REJECTED` y `decisionReason = INVALID_INPUT`.
+Los nombres técnicos de las variables `approvalStatus` y `decisionReason` se conservan para mantener el contrato generado por Kogito. Sus valores de negocio están en español y se transportan en mayúsculas, sin tildes, para que sean estables como identificadores de API.
 
-## Diseño de la solución
+Los datos inválidos o incompletos no se tratan como un error HTTP de negocio. Por ejemplo, `{}` finaliza como `RECHAZADO` con razón `DATOS_INVALIDOS`, sin dividir entre cero ni lanzar una excepción del motor.
+
+## Ejemplos de evaluación
+
+Todos los ejemplos se envían al mismo endpoint y devuelven `201 Created`. El resultado se encuentra en `approvalStatus` y el motivo en `decisionReason`.
+
+### Aprobación automática
+
+Este caso verifica el límite exacto de score `750` y ratio de deuda de `35%`:
+
+```bash
+curl --request POST 'http://localhost:8080/creditApproval' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "customerId": "CUST-AP-001",
+    "creditScore": 750,
+    "monthlyIncome": 2500,
+    "monthlyDebt": 875,
+    "requestedAmount": 10000,
+    "fraudConfirmed": false
+  }'
+```
+
+Resultado esperado:
+
+```json
+{
+  "approvalStatus": "APROBADO",
+  "decisionReason": "APROBACION_AUTOMATICA",
+  "debtRatio": 0.35
+}
+```
+
+### Revisión manual
+
+Este caso verifica el límite inferior del rango manual, `creditScore = 650`:
+
+```bash
+curl --request POST 'http://localhost:8080/creditApproval' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "customerId": "CUST-RM-001",
+    "creditScore": 650,
+    "monthlyIncome": 2500,
+    "monthlyDebt": 600,
+    "requestedAmount": 10000,
+    "fraudConfirmed": false
+  }'
+```
+
+Resultado esperado:
+
+```json
+{
+  "approvalStatus": "REVISION_MANUAL",
+  "decisionReason": "REVISION_REQUERIDA",
+  "debtRatio": 0.24
+}
+```
+
+El límite superior, `creditScore = 749`, produce el mismo estado `REVISION_MANUAL`.
+
+### Rechazo por política crediticia
+
+Un score inferior a `650` se rechaza por política:
+
+```bash
+curl --request POST 'http://localhost:8080/creditApproval' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "customerId": "CUST-RJ-001",
+    "creditScore": 649,
+    "monthlyIncome": 2500,
+    "monthlyDebt": 600,
+    "requestedAmount": 10000,
+    "fraudConfirmed": false
+  }'
+```
+
+Resultado esperado:
+
+```json
+{
+  "approvalStatus": "RECHAZADO",
+  "decisionReason": "POLITICA_CREDITICIA_NO_CUMPLIDA",
+  "debtRatio": 0.24
+}
+```
+
+### Fraude confirmado
+
+El fraude tiene prioridad, incluso si la solicitud cumpliría los criterios de aprobación:
+
+```bash
+curl --request POST 'http://localhost:8080/creditApproval' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "customerId": "CUST-FR-001",
+    "creditScore": 800,
+    "monthlyIncome": 3000,
+    "monthlyDebt": 600,
+    "requestedAmount": 10000,
+    "fraudConfirmed": true
+  }'
+```
+
+Resultado esperado:
+
+```json
+{
+  "approvalStatus": "RECHAZADO",
+  "decisionReason": "FRAUDE_CONFIRMADO"
+}
+```
+
+### Datos incompletos o inválidos
+
+Una solicitud vacía se procesa de forma controlada y no devuelve `400 Bad Request`:
+
+```bash
+curl --request POST 'http://localhost:8080/creditApproval' \
+  --header 'Content-Type: application/json' \
+  --data '{}'
+```
+
+Resultado esperado:
+
+```json
+{
+  "approvalStatus": "RECHAZADO",
+  "decisionReason": "DATOS_INVALIDOS",
+  "debtRatio": null
+}
+```
+
+De igual forma, `monthlyIncome = 0` se rechaza como `DATOS_INVALIDOS` y no intenta calcular el ratio de deuda.
+
+## Estados y razones
+
+### Estados
+
+| Valor | Significado |
+|---|---|
+| `APROBADO` | La solicitud cumple las condiciones de aprobación automática. |
+| `REVISION_MANUAL` | La solicitud requiere análisis adicional según la política. |
+| `RECHAZADO` | La solicitud no puede aprobarse automáticamente o contiene datos inválidos. |
+
+### Razones
+
+| Valor | Significado |
+|---|---|
+| `APROBACION_AUTOMATICA` | Cumple los criterios de aprobación automática. |
+| `REVISION_REQUERIDA` | Debe ser revisada manualmente según la política. |
+| `POLITICA_CREDITICIA_NO_CUMPLIDA` | No cumple los criterios de aprobación. |
+| `FRAUDE_CONFIRMADO` | Existe fraude confirmado; esta razón tiene prioridad. |
+| `DATOS_INVALIDOS` | Faltan datos o algún valor no cumple las restricciones estructurales. |
+
+## Reglas de negocio
+
+La tabla DMN utiliza la hit policy `FIRST`: las reglas se evalúan en orden y se devuelve el primer resultado aplicable.
+
+| Prioridad | Condición | Resultado |
+|---:|---|---|
+| 1 | `fraudConfirmed = true` | `RECHAZADO` |
+| 2 | `inputValid = false` | `RECHAZADO` |
+| 3 | score `>= 750`, ingreso `>= 1500` y ratio `<= 35%` | `APROBADO` |
+| 4 | score entre `650` y `749` | `REVISION_MANUAL` |
+| 5 | score `< 650` | `RECHAZADO` |
+| 6 | score `>= 750` sin cumplir la aprobación automática | `REVISION_MANUAL` |
+
+La última regla hace explícito el supuesto de negocio para un score alto que no cumple el ingreso mínimo o el límite de endeudamiento: se deriva a revisión manual en lugar de rechazarse automáticamente.
+
+Fraude se evalúa antes que cualquier otra condición. Por eso un fraude confirmado conserva el resultado `RECHAZADO` y la razón `FRAUDE_CONFIRMADO`, incluso cuando el resto de los datos es inválido.
+
+## Arquitectura del proceso
 
 ```mermaid
 flowchart LR
-    A[Solicitud recibida] --> B[Normalizar valores ausentes]
-    B --> C[Business Rule Task]
-    C --> D[Decisión DMN]
-    D --> E{approvalStatus}
-    E -->|APPROVED| F[Aprobado]
-    E -->|MANUAL_REVIEW| G[Revisión manual]
-    E -->|REJECTED| H[Rechazado]
+    A[Solicitud recibida] --> B[Normalizar datos ausentes]
+    B --> C[Ejecutar decisión DMN]
+    C --> D{Estado de aprobación}
+    D -->|APROBADO| E[Finalizar como aprobado]
+    D -->|REVISION_MANUAL| F[Finalizar para revisión manual]
+    D -->|RECHAZADO| G[Finalizar como rechazado]
 ```
 
 ### BPMN
 
-`src/main/resources/credit-approval.bpmn2` contiene el flujo de negocio:
+`credit-approval.bpmn2` coordina el flujo:
 
-1. `Application received` inicia la instancia.
-2. `Normalize missing input` delega en `CreditApplicationNormalizer` la conversión de valores ausentes a sentinelas seguros (`-1`, `0`, `false` o cadena vacía). Esto permite que `{}` sea evaluado por DMN sin una excepción técnica.
-3. `Validate data and evaluate DMN` invoca la decisión `credit-approval` usando la namespace `https://example.com/credit-approval`.
-4. El gateway exclusivo enruta por `approvalStatus`.
-5. Cada ruta termina en un evento final independiente.
-
-El BPMN orquesta el proceso; no contiene la política de crédito. La política vive en DMN para que pueda revisarse y cambiarse de manera independiente.
+1. Recibe la solicitud mediante el evento inicial.
+2. Normaliza los valores ausentes antes de invocar el motor de decisiones.
+3. Ejecuta la decisión DMN `credit-approval` mediante un Business Rule Task.
+4. Enruta la instancia con un gateway exclusivo según `approvalStatus`.
+5. Finaliza en una de las tres rutas de negocio.
 
 ### DMN y FEEL
 
-`src/main/resources/credit-approval.dmn` contiene estas decisiones:
+`credit-approval.dmn` contiene las decisiones:
 
-- `inputValid`: comprueba campos requeridos, score no negativo, ingresos mayores que cero, deuda no negativa, monto positivo y `fraudConfirmed` presente.
-- `debtRatio`: calcula `monthlyDebt / monthlyIncome` únicamente cuando los ingresos son mayores que cero; de lo contrario devuelve `null` sin dividir.
-- `approvalStatus`: tabla de decisión con hit policy `FIRST`.
-- `decisionReason`: explica la ruta tomada sin cambiar el estado público.
+- `inputValid`: valida identificador, score, ingresos, deuda, monto solicitado y fraude.
+- `debtRatio`: calcula `monthlyDebt / monthlyIncome` únicamente cuando el ingreso es mayor que cero.
+- `approvalStatus`: determina el estado usando la tabla de reglas y `FIRST`.
+- `decisionReason`: devuelve una explicación estable sin duplicar la política principal.
 
-La tabla utiliza `FIRST` porque las reglas están ordenadas por prioridad y algunas condiciones pueden solaparse:
+La política no está duplicada en Java ni en BPMN. Esto permite modificar los criterios de crédito en DMN sin convertir el proceso en una colección de condiciones imperativas.
 
-| Orden | Condición | Resultado |
-|---:|---|---|
-| 1 | `fraudConfirmed = true` | `REJECTED` |
-| 2 | `inputValid = false` | `REJECTED` |
-| 3 | score `>= 750`, ingreso `>= 1500`, deuda `<= 35%` | `APPROVED` |
-| 4 | score entre `650` y `749` | `MANUAL_REVIEW` |
-| 5 | score `< 650` | `REJECTED` |
-| 6 | score `>= 750` sin cumplir aprobación automática | `MANUAL_REVIEW` |
+## Modelo Java y normalización
 
-La última fila hace explícito un supuesto necesario: una solicitud válida con score alto pero ingresos insuficientes o ratio de deuda superior al límite no se rechaza automáticamente; se deriva a revisión manual.
+- `CreditApplication` es un `record` inmutable que concentra la validación estructural y el cálculo seguro de `debtRatio`.
+- `CreditApplicationNormalizer` convierte valores ausentes en sentinelas controlados (`""`, `-1`, `0` o `false`) para que DMN pueda evaluar solicitudes incompletas.
+- `CreditApprovalStatus` define los tres estados públicos del proceso.
+- `CreditDecisionReason` define las razones públicas de la decisión.
 
-Fraude tiene prioridad incluso si los demás datos son inválidos. Los estados se mantienen limitados a los tres valores solicitados; `decisionReason` aporta el detalle operativo.
+La normalización no decide si una solicitud es válida. Solo evita errores técnicos; la decisión `inputValid` sigue determinando si los datos cumplen las reglas de negocio.
 
-## Pruebas automatizadas
+## Pruebas
 
-`CreditApprovalProcessTest` usa el endpoint HTTP generado por Kogito y cubre:
+La suite usa dos niveles de verificación:
 
-- aprobación automática con score `750` y ratio exactamente `35%`;
-- revisión manual con score `749`;
-- rechazo con score `649`;
-- fraude por encima de un score aprobable;
-- fraude con el resto del input inválido;
-- score alto con ratio de deuda desfavorable;
-- ingresos cero sin división entre cero;
-- solicitud incompleta `{}`.
+- Pruebas unitarias para el modelo y el normalizador.
+- Pruebas de integración HTTP con el endpoint generado por Kogito.
 
-La validación recomendada antes de entregar cambios es:
+Se cubren los siguientes escenarios:
+
+- Aprobación con score `750` y ratio exacto de `35%`.
+- Límites de revisión manual `650` y `749`.
+- Rechazo con score `649`.
+- Score alto con ratio de deuda desfavorable.
+- Fraude confirmado con datos aprobables.
+- Fraude confirmado junto con datos inválidos.
+- Ingreso cero sin división inválida.
+- Solicitud incompleta `{}`.
+
+Ejecutar la suite completa con:
 
 ```bash
 mvn clean test
 ```
 
-## Estructura
+## Decisiones técnicas
 
-```text
-src/main/java/com/example/KogitoApplication.java  # Arranque Spring Boot
-src/main/java/com/example/creditapproval/         # Clases Java del dominio
-src/main/resources/credit-approval.bpmn2          # Orquestación del proceso
-src/main/resources/credit-approval.dmn            # Reglas y decisiones FEEL
-src/test/java/com/example/CreditApprovalProcessTest.java
-                                                     # Pruebas HTTP de extremo a extremo
-src/test/java/com/example/creditapproval/          # Pruebas unitarias Java
-Prueba_Tecnica_Kogito_Banca.md                     # Enunciado para el candidato
-```
-
-Los archivos generados por Kogito se crean en `target/` durante la compilación y no forman parte del código fuente.
-
-## Decisiones de arquitectura
-
-Se mantuvo una sola aplicación y el endpoint generado por Kogito porque el objetivo es evaluar BPMN/DMN, no construir una capa REST paralela. La separación relevante está en los artefactos de negocio: BPMN coordina y DMN decide.
-
-Se eliminó la configuración CORS global del arquetipo. Una política abierta con credenciales no es apropiada para un servicio bancario y tampoco es necesaria para esta prueba sin frontend.
-
-La normalización está modelada como un paso BPMN visible porque evita que los datos ausentes se conviertan accidentalmente en una excepción del motor DMN. La decisión sigue siendo responsable de validar el significado de los datos y elegir el estado de negocio.
-
-## Clases Java
-
-La solución no depende únicamente de las clases que Kogito genera en `target/`. El código fuente incluye:
-
-- `CreditApplication`: record inmutable del dominio; calcula `debtRatio` de forma segura y expone la validación estructural.
-- `CreditApplicationNormalizer`: normalizador usado directamente por el script BPMN para preparar el contexto DMN.
-- `CreditApprovalStatus`: enum del contrato público de estados.
-- `CreditDecisionReason`: enum de las razones de negocio devueltas por la decisión.
-- `KogitoApplication`: arranque de Spring Boot y carga de los beans generados por Kogito.
-
-Las reglas de aprobación siguen estando en DMN para conservar la separación entre código de dominio, orquestación y política configurable. Las clases Java cubren el contrato, la seguridad del cálculo y la normalización; no duplican la tabla de decisión.
-
-## Evolución hacia producción bancaria
-
-Para producción habría que añadir, como mínimo:
-
-- autenticación, autorización y segregación de funciones;
-- contrato versionado y validación de esquema en el borde;
-- persistencia transaccional de la solicitud, decisión y auditoría inmutable;
-- trazabilidad de versión DMN, usuario, timestamp, inputs y razones, con protección de PII;
-- integración con un proveedor de fraude y políticas de timeout, retry e idempotencia;
-- revisión manual real con tareas humanas, SLA, reintentos y escalamiento;
-- observabilidad con métricas, logs estructurados, correlation ID y alertas;
-- pruebas de regresión de decisiones, pruebas de carga y controles de seguridad;
-- manejo explícito de moneda, escala decimal, redondeo, límites regulatorios y jurisdicción;
-- persistencia externa y configuración de infraestructura; actualmente el proyecto usa memoria y no requiere base de datos.
-
-## Rama para el candidato
-
-La rama `candidate/boilerplate` contiene el mismo enunciado, contrato y estructura general, pero retira la implementación de BPMN, DMN y las aserciones de la solución. Es la rama que debe entregarse al candidato:
-
-```bash
-git switch candidate/boilerplate
-mvn test
-```
-
-El candidato debe completar los archivos marcados, mantener el endpoint `/creditApproval`, ejecutar las pruebas y explicar sus supuestos en el README.
-
-## Enunciado
-
-El detalle de la prueba, tareas y criterios de evaluación está en [Prueba_Tecnica_Kogito_Banca.md](Prueba_Tecnica_Kogito_Banca.md).
+- Se utiliza el endpoint REST generado por Kogito para mantener el foco en BPMN y DMN, sin agregar una capa REST paralela.
+- `FIRST` expresa de forma explícita la prioridad de fraude y de datos inválidos.
+- La normalización ocurre en un paso visible del BPMN para separar la preparación técnica de la validación semántica.
+- No se usa persistencia, autenticación ni frontend porque no forman parte del alcance de la prueba.
+- No se utiliza CORS global; el servicio no expone una aplicación web que requiera esa política.

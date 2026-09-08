@@ -33,23 +33,23 @@ debtRatio = monthlyDebt / monthlyIncome
 
 El resultado de la evaluación debe ser uno de los siguientes:
 
-- `APPROVED`
-- `MANUAL_REVIEW`
-- `REJECTED`
+- `APROBADO`
+- `REVISION_MANUAL`
+- `RECHAZADO`
 
-Para esta prueba no se debe utilizar `400 Bad Request` como resultado de negocio. Si faltan datos o contienen valores inválidos, el proceso debe finalizar con `REJECTED` y una razón explícita, por ejemplo `INVALID_INPUT`.
+Para esta prueba no se debe utilizar `400 Bad Request` como resultado de negocio. Si faltan datos o contienen valores inválidos, el proceso debe finalizar con `RECHAZADO` y una razón explícita, por ejemplo `DATOS_INVALIDOS`.
 
 ---
 
 ## Reglas de negocio
 
-1. Si existe fraude confirmado, la solicitud debe ser **REJECTED**, independientemente de cualquier otra condición.
-2. Si `creditScore >= 750`, `monthlyIncome >= 1500` y `debtRatio <= 35%`, la solicitud debe ser **APPROVED**.
-3. Si `creditScore` está entre `650` y `749`, la solicitud debe pasar a **MANUAL_REVIEW**.
-4. Si `creditScore < 650`, la solicitud debe ser **REJECTED**.
+1. Si existe fraude confirmado, el resultado debe ser **RECHAZADO**, independientemente de cualquier otra condición.
+2. Si `creditScore >= 750`, `monthlyIncome >= 1500` y `debtRatio <= 35%`, el resultado debe ser **APROBADO**.
+3. Si `creditScore` está entre `650` y `749`, la solicitud debe pasar a **REVISION_MANUAL**.
+4. Si `creditScore < 650`, el resultado debe ser **RECHAZADO**.
 5. Los datos inválidos o incompletos deben manejarse correctamente y no provocar errores inesperados.
 
-Cuando el fraude esté confirmado, debe conservar prioridad también en la razón devuelta. Para evitar una división entre cero, `monthlyIncome = 0` no debe calcular `debtRatio` y debe conducir a `REJECTED` por input inválido.
+Cuando el fraude esté confirmado, debe conservar prioridad también en la razón devuelta. Para evitar una división entre cero, `monthlyIncome = 0` no debe calcular `debtRatio` y debe conducir a `RECHAZADO` por datos inválidos.
 
 ---
 

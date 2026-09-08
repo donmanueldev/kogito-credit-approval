@@ -27,58 +27,65 @@ class CreditApprovalProcessTest {
     @Test
     void approvesEligibleApplicationAtTheDebtRatioBoundary() {
         evaluate(application(750, 2_500, 875, 10_000, false))
-                .body("approvalStatus", equalTo("APPROVED"))
-                .body("decisionReason", equalTo("AUTOMATIC_APPROVAL"))
+                .body("approvalStatus", equalTo("APROBADO"))
+                .body("decisionReason", equalTo("APROBACION_AUTOMATICA"))
                 .body("debtRatio", equalTo(0.35F));
     }
 
     @Test
     void sendsMidRangeScoreToManualReview() {
         evaluate(application(749, 2_500, 600, 10_000, false))
-                .body("approvalStatus", equalTo("MANUAL_REVIEW"))
-                .body("decisionReason", equalTo("POLICY_REQUIRES_REVIEW"));
+                .body("approvalStatus", equalTo("REVISION_MANUAL"))
+                .body("decisionReason", equalTo("REVISION_REQUERIDA"));
+    }
+
+    @Test
+    void sendsLowerScoreBoundaryToManualReview() {
+        evaluate(application(650, 2_500, 600, 10_000, false))
+                .body("approvalStatus", equalTo("REVISION_MANUAL"))
+                .body("decisionReason", equalTo("REVISION_REQUERIDA"));
     }
 
     @Test
     void rejectsLowScore() {
         evaluate(application(649, 2_500, 600, 10_000, false))
-                .body("approvalStatus", equalTo("REJECTED"))
-                .body("decisionReason", equalTo("CREDIT_POLICY_NOT_MET"));
+                .body("approvalStatus", equalTo("RECHAZADO"))
+                .body("decisionReason", equalTo("POLITICA_CREDITICIA_NO_CUMPLIDA"));
     }
 
     @Test
     void fraudTakesPriorityOverApproval() {
         evaluate(application(800, 2_500, 600, 10_000, true))
-                .body("approvalStatus", equalTo("REJECTED"))
-                .body("decisionReason", equalTo("FRAUD_CONFIRMED"));
+                .body("approvalStatus", equalTo("RECHAZADO"))
+                .body("decisionReason", equalTo("FRAUDE_CONFIRMADO"));
     }
 
     @Test
     void fraudTakesPriorityEvenWhenTheRestOfTheInputIsInvalid() {
         evaluate(application("", -1, 0, 0, 0, true))
-                .body("approvalStatus", equalTo("REJECTED"))
-                .body("decisionReason", equalTo("FRAUD_CONFIRMED"));
+                .body("approvalStatus", equalTo("RECHAZADO"))
+                .body("decisionReason", equalTo("FRAUDE_CONFIRMADO"));
     }
 
     @Test
     void highScoreWithUnfavorableDebtRatioRequiresReview() {
         evaluate(application(750, 2_500, 876, 10_000, false))
-                .body("approvalStatus", equalTo("MANUAL_REVIEW"));
+                .body("approvalStatus", equalTo("REVISION_MANUAL"));
     }
 
     @Test
     void zeroIncomeIsRejectedAsInvalidInput() {
         evaluate(application(800, 0, 0, 10_000, false))
-                .body("approvalStatus", equalTo("REJECTED"))
-                .body("decisionReason", equalTo("INVALID_INPUT"))
+                .body("approvalStatus", equalTo("RECHAZADO"))
+                .body("decisionReason", equalTo("DATOS_INVALIDOS"))
                 .body("debtRatio", equalTo(null));
     }
 
     @Test
     void incompleteApplicationIsRejectedAsInvalidInput() {
         evaluate(Map.of())
-                .body("approvalStatus", equalTo("REJECTED"))
-                .body("decisionReason", equalTo("INVALID_INPUT"));
+                .body("approvalStatus", equalTo("RECHAZADO"))
+                .body("decisionReason", equalTo("DATOS_INVALIDOS"));
     }
 
     private io.restassured.response.ValidatableResponse evaluate(Map<String, Object> payload) {

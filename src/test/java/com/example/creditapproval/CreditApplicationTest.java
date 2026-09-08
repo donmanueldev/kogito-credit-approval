@@ -33,9 +33,9 @@ class CreditApplicationTest {
 
     @Test
     void exposesTheBusinessStatesAsAnExplicitContract() {
-        assertEquals("APPROVED", CreditApprovalStatus.APPROVED.name());
-        assertEquals("MANUAL_REVIEW", CreditApprovalStatus.MANUAL_REVIEW.name());
-        assertEquals("REJECTED", CreditApprovalStatus.REJECTED.name());
+        assertEquals("APROBADO", CreditApprovalStatus.APROBADO.name());
+        assertEquals("REVISION_MANUAL", CreditApprovalStatus.REVISION_MANUAL.name());
+        assertEquals("RECHAZADO", CreditApprovalStatus.RECHAZADO.name());
     }
 
     private static CreditApplication validApplication(BigDecimal debt, BigDecimal income) {

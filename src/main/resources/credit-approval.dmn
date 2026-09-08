@@ -81,7 +81,7 @@
       </semantic:input>
       <semantic:output id="status_output" label="Approval status">
         <semantic:defaultOutputEntry id="_B76E415C-7D2D-4AF0-B031-74DB0F32824D">
-          <semantic:text>&quot;REJECTED&quot;</semantic:text>
+          <semantic:text>&quot;RECHAZADO&quot;</semantic:text>
         </semantic:defaultOutputEntry>
       </semantic:output>
       <semantic:rule id="status_rule_fraud_priority">
@@ -101,7 +101,7 @@
           <semantic:text>-</semantic:text>
         </semantic:inputEntry>
         <semantic:outputEntry id="_01885533-2FA6-4059-96A6-157CCDD7A803">
-          <semantic:text>&quot;REJECTED&quot;</semantic:text>
+          <semantic:text>&quot;RECHAZADO&quot;</semantic:text>
         </semantic:outputEntry>
       </semantic:rule>
       <semantic:rule id="status_rule_invalid">
@@ -121,7 +121,7 @@
           <semantic:text>-</semantic:text>
         </semantic:inputEntry>
         <semantic:outputEntry id="_6B886387-0702-49A6-BF89-88586E1FF9E6">
-          <semantic:text>&quot;REJECTED&quot;</semantic:text>
+          <semantic:text>&quot;RECHAZADO&quot;</semantic:text>
         </semantic:outputEntry>
       </semantic:rule>
       <semantic:rule id="status_rule_fraud">
@@ -141,7 +141,7 @@
           <semantic:text>-</semantic:text>
         </semantic:inputEntry>
         <semantic:outputEntry id="_D8404BF2-03B1-43C2-9726-04E30B9553B3">
-          <semantic:text>&quot;REJECTED&quot;</semantic:text>
+          <semantic:text>&quot;RECHAZADO&quot;</semantic:text>
         </semantic:outputEntry>
       </semantic:rule>
       <semantic:rule id="status_rule_approved">
@@ -161,7 +161,7 @@
           <semantic:text>&lt;= 0.35</semantic:text>
         </semantic:inputEntry>
         <semantic:outputEntry id="_0D587055-20D4-4BB8-943B-4E05F5081608">
-          <semantic:text>&quot;APPROVED&quot;</semantic:text>
+          <semantic:text>&quot;APROBADO&quot;</semantic:text>
         </semantic:outputEntry>
       </semantic:rule>
       <semantic:rule id="status_rule_manual_score">
@@ -181,7 +181,7 @@
           <semantic:text>-</semantic:text>
         </semantic:inputEntry>
         <semantic:outputEntry id="_0C6F70DD-AF26-481F-86B3-3951B832E56A">
-          <semantic:text>&quot;MANUAL_REVIEW&quot;</semantic:text>
+          <semantic:text>&quot;REVISION_MANUAL&quot;</semantic:text>
         </semantic:outputEntry>
       </semantic:rule>
       <semantic:rule id="status_rule_rejected_score">
@@ -201,7 +201,7 @@
           <semantic:text>-</semantic:text>
         </semantic:inputEntry>
         <semantic:outputEntry id="_37D2EDBA-E8CC-48F8-8B48-1444E323CF97">
-          <semantic:text>&quot;REJECTED&quot;</semantic:text>
+          <semantic:text>&quot;RECHAZADO&quot;</semantic:text>
         </semantic:outputEntry>
       </semantic:rule>
       <semantic:rule id="status_rule_manual_fallback">
@@ -221,7 +221,7 @@
           <semantic:text>-</semantic:text>
         </semantic:inputEntry>
         <semantic:outputEntry id="_25C5DC65-9C06-4285-861B-0010A56785BD">
-          <semantic:text>&quot;MANUAL_REVIEW&quot;</semantic:text>
+          <semantic:text>&quot;REVISION_MANUAL&quot;</semantic:text>
         </semantic:outputEntry>
       </semantic:rule>
     </semantic:decisionTable>
@@ -238,7 +238,7 @@
       <semantic:requiredInput href="#i_fraudConfirmed" />
     </semantic:informationRequirement>
     <semantic:literalExpression id="_39CE6128-6CB7-4C4A-B72D-23835F31A096">
-      <semantic:text>if fraudConfirmed = true then &quot;FRAUD_CONFIRMED&quot; else if inputValid = false then &quot;INVALID_INPUT&quot; else if approvalStatus = &quot;APPROVED&quot; then &quot;AUTOMATIC_APPROVAL&quot; else if approvalStatus = &quot;MANUAL_REVIEW&quot; then &quot;POLICY_REQUIRES_REVIEW&quot; else &quot;CREDIT_POLICY_NOT_MET&quot;</semantic:text>
+      <semantic:text>if fraudConfirmed = true then &quot;FRAUDE_CONFIRMADO&quot; else if inputValid = false then &quot;DATOS_INVALIDOS&quot; else if approvalStatus = &quot;APROBADO&quot; then &quot;APROBACION_AUTOMATICA&quot; else if approvalStatus = &quot;REVISION_MANUAL&quot; then &quot;REVISION_REQUERIDA&quot; else &quot;POLITICA_CREDITICIA_NO_CUMPLIDA&quot;</semantic:text>
     </semantic:literalExpression>
   </semantic:decision>
   <semantic:inputData id="i_customerId" name="customerId">
@@ -263,7 +263,12 @@
     <dmndi:DMNDiagram id="_B486432D-6B62-417C-BDEE-BE3E78020B77" name="Default DRD" useAlternativeInputDataShape="false">
       <di:extension>
         <kie:ComponentsWidthsExtension>
-          <kie:ComponentWidths />
+          <kie:ComponentWidths dmnElementRef="_39CE6128-6CB7-4C4A-B72D-23835F31A096">
+            <kie:width>1634</kie:width>
+          </kie:ComponentWidths>
+          <kie:ComponentWidths dmnElementRef="_8F257952-D067-4FC6-A049-462AFB532726">
+            <kie:width>754</kie:width>
+          </kie:ComponentWidths>
         </kie:ComponentsWidthsExtension>
       </di:extension>
       <dmndi:DMNShape id="_BC26E37B-3C03-4F87-8FC2-DB47EBF49418" dmnElementRef="d_inputValid">
